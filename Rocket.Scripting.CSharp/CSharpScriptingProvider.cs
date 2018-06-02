@@ -19,8 +19,7 @@ namespace Rocket.Scripting.CSharp
 
         public override IScriptContext CreateScriptContext(IDependencyContainer container)
         {
-            CSharpScriptEngine 
-            IEvaluator evaluator = CSScript.
+            IEvaluator evaluator = CSScript.CodeDomEvaluator.Clone();
             evaluator.ReferenceDomainAssemblies();
 
             var ctx = new CSharpScriptContext(container, evaluator);

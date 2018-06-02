@@ -1,4 +1,5 @@
 ﻿using System;
+using CSScriptLibrary;
 using Rocket.API.DependencyInjection;
 
 namespace Rocket.Scripting.CSharp
