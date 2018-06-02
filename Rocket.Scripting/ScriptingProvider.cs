@@ -4,16 +4,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Rocket.API;
-using Rocket.API.Chat;
 using Rocket.API.Configuration;
 using Rocket.API.DependencyInjection;
-using Rocket.API.Economy;
-using Rocket.API.Eventing;
-using Rocket.API.Logging;
-using Rocket.API.Permissions;
-using Rocket.API.Player;
 using Rocket.API.Plugins;
-using Rocket.API.Scheduler;
 using Rocket.Core.Configuration;
 using Rocket.Core.Logging;
 
@@ -36,7 +29,7 @@ namespace Rocket.Scripting
         /// <summary>
         /// File types associated with the scripting language (e.g. ".js", ".javascript")
         /// </summary>
-        public abstract List<string> FileTypes { get; }
+        public abstract string[] FileTypes { get; }
 
         /// <summary>
         /// Full name of the scripting language (e.g. "JavaScript")
@@ -196,5 +189,7 @@ namespace Rocket.Scripting
 
         /// <inheritdoc />
         public string ConfigurationName => ScriptName;
+
+        public abstract string ServiceName { get; }
     }
 }

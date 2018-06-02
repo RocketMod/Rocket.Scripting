@@ -4,7 +4,9 @@ using System.Linq;
 using Rocket.API.Commands;
 using Rocket.API.DependencyInjection;
 using Rocket.API.Permissions;
+using Rocket.API.User;
 using Rocket.Core.Commands;
+using Rocket.Core.User;
 
 namespace Rocket.Scripting.Commands
 {
@@ -12,7 +14,7 @@ namespace Rocket.Scripting.Commands
     {
         public static Dictionary<string, IScriptContext> ScriptContexts { get; } = new Dictionary<string, IScriptContext>();
 
-        public static IScriptContext StartSession(IDependencyContainer container, IIdentifiable user, string providerName)
+        public static IScriptContext StartSession(IDependencyContainer container, IUser user, string providerName)
         {
             var context = GetScriptContext(user);
             if (context != null)
@@ -33,7 +35,7 @@ namespace Rocket.Scripting.Commands
             return null;
         }
 
-        public static IScriptContext GetScriptContext(IIdentifiable user)
+        public static IScriptContext GetScriptContext(IUser user)
         {
             foreach (var scriptContext in ScriptContexts)
             {
@@ -44,14 +46,14 @@ namespace Rocket.Scripting.Commands
             return null;
         }
 
-        public static bool StopSession(IIdentifiable user)
+        public static bool StopSession(IUser user)
         {
             return ScriptContexts.Keys
                 .ToList()
                 .Where(c => c.Equals(user.Id, StringComparison.OrdinalIgnoreCase))
                 .All(c => ScriptContexts.Remove(c));
         }
-        public bool SupportsCaller(Type commandCaller)
+        public bool SupportsUser(Type commandUser)
         {
             return true;
         }
@@ -61,16 +63,16 @@ namespace Rocket.Scripting.Commands
             if (commandContext.Parameters.Length == 0)
                 throw new CommandWrongUsageException();
 
-            var scriptContext = GetScriptContext(commandContext.Caller);
+            var scriptContext = GetScriptContext(commandContext.User);
             if (scriptContext == null)
             {
-                commandContext.Caller.SendMessage("Session was not started yet. Use " + commandContext.CommandPrefix + commandContext.CommandAlias + " start <type> to start a new session.", ConsoleColor.Red);
+                commandContext.User.SendMessage("Session was not started yet. Use " + commandContext.CommandPrefix + commandContext.CommandAlias + " start <type> to start a new session.", ConsoleColor.Red);
                 return;
             }
 
             var result = scriptContext.Eval(commandContext.Parameters.GetArgumentLine(0));
             if (result.HasReturn)
-                commandContext.Caller.SendMessage("> " + result.Return, ConsoleColor.Gray);
+                commandContext.User.SendMessage("> " + result.Return, ConsoleColor.Gray);
         }
 
         public string Name => "Eval";
@@ -79,12 +81,12 @@ namespace Rocket.Scripting.Commands
         public string Description => null;
         public string Permission => "Rocket.Scripting";
         public string Syntax => "<expression>";
-        public ISubCommand[] ChildCommands => new ISubCommand[] { new CommandEvalStart(), new CommandEvalExit() };
+        public IChildCommand[] ChildCommands => new IChildCommand[] { new CommandEvalStart(), new CommandEvalExit() };
     }
 
-    public class CommandEvalStart : ISubCommand
+    public class CommandEvalStart : IChildCommand
     {
-        public bool SupportsCaller(Type commandCaller)
+        public bool SupportsUser(Type commandUser)
         {
             return true;
         }
@@ -95,17 +97,17 @@ namespace Rocket.Scripting.Commands
                 throw new CommandWrongUsageException();
 
             var scriptType = commandContext.Parameters[0];
-            var scriptingContext = CommandEval.StartSession(commandContext.Container, commandContext.Caller, scriptType);
+            var scriptingContext = CommandEval.StartSession(commandContext.Container, commandContext.User, scriptType);
             if (scriptingContext == null)
             {
-                commandContext.Caller.SendMessage("Script provider not found: " + scriptType, ConsoleColor.Red);
+                commandContext.User.SendMessage("Script provider not found: " + scriptType, ConsoleColor.Red);
                 var providers= commandContext.Container.ResolveAll<IScriptingProvider>();
                 var providerNames = string.Join(", ", providers.Select(c => c.ScriptName).ToArray());
-                commandContext.Caller.SendMessage("Available script providers: " + providerNames);
+                commandContext.User.SendMessage("Available script providers: " + providerNames);
                 return;
             }
 
-            commandContext.Caller.SendMessage("Scripting session has started.", ConsoleColor.Green);
+            commandContext.User.SendMessage("Scripting session has started.", ConsoleColor.Green);
         }
 
         public string Name => "Start";
@@ -114,12 +116,12 @@ namespace Rocket.Scripting.Commands
         public string Description => null;
         public string Permission => "Rocket.Scripting";
         public string Syntax => "<script provider>";
-        public ISubCommand[] ChildCommands => null;
+        public IChildCommand[] ChildCommands => null;
     }
 
-    public class CommandEvalExit : ISubCommand
+    public class CommandEvalExit : IChildCommand
     {
-        public bool SupportsCaller(Type commandCaller)
+        public bool SupportsUser(Type commandUser)
         {
             return true;
         }
@@ -129,14 +131,14 @@ namespace Rocket.Scripting.Commands
             if (commandContext.Parameters.Length != 0)
                 throw new CommandWrongUsageException();
 
-            bool success = CommandEval.StopSession(commandContext.Caller);
+            bool success = CommandEval.StopSession(commandContext.User);
             if (!success)
             {
-                commandContext.Caller.SendMessage("Session is not running.", ConsoleColor.Red);
+                commandContext.User.SendMessage("Session is not running.", ConsoleColor.Red);
                 return;
             }
 
-            commandContext.Caller.SendMessage("Session was stopped.", ConsoleColor.Green);
+            commandContext.User.SendMessage("Session was stopped.", ConsoleColor.Green);
         }
 
         public string Name => "Exit";
@@ -145,6 +147,6 @@ namespace Rocket.Scripting.Commands
         public string Description => null;
         public string Permission => "Rocket.Scripting";
         public string Syntax => "";
-        public ISubCommand[] ChildCommands => null;
+        public IChildCommand[] ChildCommands => null;
     }
 }

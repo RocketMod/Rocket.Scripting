@@ -1,6 +1,4 @@
 ﻿using System;
-using System.ComponentModel;
-using Rocket.API.Chat;
 using Rocket.API.Economy;
 using Rocket.API.Eventing;
 using Rocket.API.Logging;
@@ -8,6 +6,7 @@ using Rocket.API.Permissions;
 using Rocket.API.Player;
 using Rocket.API.Plugins;
 using Rocket.API.Scheduler;
+using Rocket.API.User;
 
 namespace Rocket.Scripting
 {
@@ -21,7 +20,7 @@ namespace Rocket.Scripting
             TryRegisterService<IPlayerManager>(context, "playermanager");
             TryRegisterService<IPluginManager>(context, "plugins");
             TryRegisterService<IEconomyProvider>(context, "economy");
-            TryRegisterService<IChatManager>(context, "chat");
+            TryRegisterService<IUserManager>(context, "usermanager");
             TryRegisterService<IEventManager>(context, "events");
             TryRegisterService<IPermissionProvider>(context, "permissions");
 

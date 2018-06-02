@@ -1,6 +1,7 @@
 ﻿using System;
 using Jurassic;
 using Rocket.API.Commands;
+using Rocket.Core.User;
 
 namespace Rocket.Scripting.JavaScript
 {
@@ -13,7 +14,7 @@ namespace Rocket.Scripting.JavaScript
 
         public void SendErrorMessage(ICommandContext context)
         {
-            context.Caller.SendMessage("> " + Message, ConsoleColor.Red);
+            context.User.SendMessage("> " + Message, ConsoleColor.Red);
         }
     }
 }

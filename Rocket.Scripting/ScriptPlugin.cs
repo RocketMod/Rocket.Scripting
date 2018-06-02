@@ -25,7 +25,7 @@ namespace Rocket.Scripting
 
         public IScriptContext ScriptContext { get; }
 
-        protected IDependencyContainer Container { get; }
+        public IDependencyContainer Container { get; }
 
         public bool IsAlive { get; protected set; }
 
@@ -34,26 +34,28 @@ namespace Rocket.Scripting
         public string WorkingDirectory => Path.Combine(_provider.WorkingDirectory, Name);
         public string ConfigurationName => Name;
 
-        public bool Activate()
+        public bool Load(bool isFromReload)
         {
             IsAlive = true;
             return OnActivate();
         }
         protected abstract bool OnActivate();
 
-        public bool Deactivate()
+        public bool Unload()
         {
             bool result = OnDeactivate();
             IsAlive = false;
             return result;
         }
 
+        public IPluginManager PluginManager => _provider;
+
         protected abstract bool OnDeactivate();
 
         public void Reload()
         {
-            Deactivate();
-            Activate();
+            Unload();
+            Load(true);
         }
     }
 }

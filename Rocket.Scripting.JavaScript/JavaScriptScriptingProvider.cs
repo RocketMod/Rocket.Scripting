@@ -13,7 +13,7 @@ namespace Rocket.Scripting.JavaScript
         {
         }
 
-        public override List<string> FileTypes => new List<string> { "js" };
+        public override string[] FileTypes => new []{ "js" };
         public override string ScriptName => "JavaScript";
         public override IEnumerable<IPlugin> Plugins { get; } = new List<IPlugin>();
         protected override void OnInit()
@@ -59,6 +59,7 @@ namespace Rocket.Scripting.JavaScript
                 return new ScriptResult(ScriptExecutionResult.FailedMisc);
             }
 
+            engine.ExecuteFile(path);
             var ret = engine.CallGlobalFunction(entryPoint, context);
             var res = new ScriptResult(ScriptExecutionResult.Success)
             {
@@ -89,5 +90,7 @@ namespace Rocket.Scripting.JavaScript
             RegisterContext(ctx);
             return ctx;
         }
+
+        public override string ServiceName => "JavaScript";
     }
 }

@@ -5,7 +5,7 @@ namespace Rocket.Scripting
 {
     public interface IScriptingProvider
     {
-        List<string> FileTypes { get; }
+        string[] FileTypes { get; }
 
         string ScriptName { get; }
 

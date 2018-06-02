@@ -10,9 +10,9 @@ namespace Rocket.Scripting.JavaScript
         {
         }
 
-        protected override void OnActivate(bool isFromReload)
+        protected override void OnLoad(bool isFromReload)
         {
-            base.OnActivate(isFromReload);
+            base.OnLoad(isFromReload);
             if (!isFromReload)
             {
                 Container.Resolve<IPluginManager>("javascript_plugins").Init();
