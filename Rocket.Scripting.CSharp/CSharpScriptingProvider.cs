@@ -27,8 +27,15 @@ namespace Rocket.Scripting.CSharp
             return ctx;
         }
 
-        public override ScriptResult ExecuteFile(string path, string entryPoint, IDependencyContainer container, ref IScriptContext context,
-            ScriptPluginMeta meta, bool createPluginInstanceOnNull = false)
+        public override ScriptResult ExecuteFile(
+            string path,
+            IDependencyContainer container,
+            ref IScriptContext context,
+            ScriptPluginMeta meta,
+            bool createPluginInstanceOnNull = false,
+            string entryPoint = null,
+            params object[] arguments
+        )
         {
             if (context == null)
             {
@@ -82,7 +89,7 @@ namespace Rocket.Scripting.CSharp
                     throw new FileNotFoundException(null, entryFile);
 
                 IScriptContext context = null;
-                ExecuteFile(entryFile, meta.EntryPoint, Container, ref context, meta, true);
+                ExecuteFile(entryFile, Container, ref context, meta, true);
             }
         }
 

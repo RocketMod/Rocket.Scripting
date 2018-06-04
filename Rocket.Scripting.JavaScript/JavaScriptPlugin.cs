@@ -1,4 +1,6 @@
-﻿using Rocket.API.DependencyInjection;
+﻿using Jint.Native;
+using Jint.Runtime;
+using Rocket.API.DependencyInjection;
 using Rocket.Core.DependencyInjection;
 
 namespace Rocket.Scripting.JavaScript
@@ -10,14 +12,17 @@ namespace Rocket.Scripting.JavaScript
         {
         }
 
-        protected override bool OnActivate()
+        protected override bool OnLoad(bool isFromReload)
         {
-            return (bool) 
-                ((JavaScriptContext) ScriptContext).ScriptEngine.CallGlobalFunction(PluginMeta.EntryPoint, Container);
+            var engine = ((JavaScriptContext) ScriptContext).ScriptEngine;
+            engine.Invoke(PluginMeta.EntryPoint, this, Container, isFromReload);
+            var result = engine.GetCompletionValue();
+            return result.Type == Types.None || result == JsBoolean.True || result == JsValue.Undefined || result == JsValue.Null;
         }
 
-        protected override bool OnDeactivate()
+        protected override bool OnUnload()
         {
+            var engine = ((JavaScriptContext)ScriptContext).ScriptEngine;
             return true;
         }
     }

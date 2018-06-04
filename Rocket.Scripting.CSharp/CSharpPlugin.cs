@@ -10,12 +10,12 @@ namespace Rocket.Scripting.CSharp
         {
         }
 
-        protected override bool OnActivate()
+        protected override bool OnLoad(bool isFromReload)
         {
             return true;
         }
 
-        protected override bool OnDeactivate()
+        protected override bool OnUnload()
         {
             return true;
         }

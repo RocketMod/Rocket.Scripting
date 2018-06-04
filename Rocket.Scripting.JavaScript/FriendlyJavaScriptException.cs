@@ -1,13 +1,13 @@
 ﻿using System;
-using Jurassic;
+using Jint.Runtime;
 using Rocket.API.Commands;
 using Rocket.Core.User;
 
 namespace Rocket.Scripting.JavaScript
 {
-    public class WrappedJavaScriptException : Exception, ICommandFriendlyException
+    public class FriendlyJavaScriptException : Exception, ICommandFriendlyException
     {
-        public WrappedJavaScriptException(JavaScriptException ex) : base(ex.Message)
+        public FriendlyJavaScriptException(JavaScriptException ex) : base(ex.Message)
         {
 
         }

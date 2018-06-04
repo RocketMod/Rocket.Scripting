@@ -113,7 +113,7 @@ namespace Rocket.Scripting
             if (targetFile == null)
                 return new ScriptResult(ScriptExecutionResult.FileNotFound);
 
-            return ExecuteFile(targetFile, meta.EntryPoint, Container, ref context, meta, true);
+            return ExecuteFile(targetFile, Container, ref context, meta, true);
         }
 
         /// <summary>
@@ -160,9 +160,17 @@ namespace Rocket.Scripting
         /// <param name="createPluginInstanceOnNull">Create a new plugin instance when <paramref name="context"/> is null?</param>
         /// <param name="container">The dependency container.</param>
         /// <param name="meta">Metadata for the plugin if <paramref name="createPluginInstanceOnNull"/> is true and <paramref name="context"/> is null. Can be null if <paramref name="createPluginInstanceOnNull"/> is false.</param>
+        /// <param name="arguments">The arguments for the entry point.</param>
         /// <returns>The result of the script execution.</returns>
-        public abstract ScriptResult ExecuteFile(string path, string entryPoint, IDependencyContainer container,
-            ref IScriptContext context, ScriptPluginMeta meta, bool createPluginInstanceOnNull = false);
+        public abstract ScriptResult ExecuteFile(
+            string path,
+            IDependencyContainer container,
+            ref IScriptContext context,
+            ScriptPluginMeta meta,
+            bool createPluginInstanceOnNull = false,
+            string entryPoint = null,
+            params object[] arguments
+        );
 
         /// <summary>
         /// Executes the given script file
@@ -171,9 +179,16 @@ namespace Rocket.Scripting
         /// <param name="entryPoint">The entry function to call.</param>
         /// <param name="context">The script context. Can be null if there is none.</param>
         /// <param name="container">The dependency container.</param>
+        /// <param name="arguments">The arguments for the entry point.</param>
         /// <returns>The result of the script execution.</returns>
-        public virtual ScriptResult ExecuteFile(string path, string entryPoint, IDependencyContainer container, ref IScriptContext context) =>
-            ExecuteFile(path, entryPoint, container, ref context, null, false);
+        public virtual ScriptResult ExecuteFile(
+                string path,
+                IDependencyContainer container,
+                ref IScriptContext context,
+                string entryPoint,
+                params object[] arguments
+            ) =>
+            ExecuteFile(path, container, ref context, null, false, entryPoint, arguments);
 
         public abstract IScriptContext CreateScriptContext(IDependencyContainer container);
 

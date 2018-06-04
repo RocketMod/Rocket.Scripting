@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using Rocket.API.Commands;
-using Rocket.API.DependencyInjection;
-using Rocket.API.Permissions;
-using Rocket.API.User;
+using Rocket.API.Plugins;
 using Rocket.Core.Commands;
 using Rocket.Core.User;
 
@@ -12,47 +9,13 @@ namespace Rocket.Scripting.Commands
 {
     public class CommandEval : ICommand
     {
-        public static Dictionary<string, IScriptContext> ScriptContexts { get; } = new Dictionary<string, IScriptContext>();
+        private readonly ScriptingPlugin _scriptPlugin;
 
-        public static IScriptContext StartSession(IDependencyContainer container, IUser user, string providerName)
+        public CommandEval(IPlugin plugin)
         {
-            var context = GetScriptContext(user);
-            if (context != null)
-                return context;
-
-            var providers = container.ResolveAll<IScriptingProvider>();
-            foreach (var provider in providers)
-            {
-                if (provider.ScriptName.Equals(providerName, StringComparison.OrdinalIgnoreCase)
-                    || provider.FileTypes.Any(c => c.Equals(providerName, StringComparison.OrdinalIgnoreCase)))
-                {
-                    context = provider.CreateScriptContext(container);
-                    ScriptContexts.Add(user.Id, context);
-                    return context;
-                }
-            }
-
-            return null;
+            _scriptPlugin = (ScriptingPlugin) plugin;
         }
 
-        public static IScriptContext GetScriptContext(IUser user)
-        {
-            foreach (var scriptContext in ScriptContexts)
-            {
-                if (scriptContext.Key.Equals(user.Id, StringComparison.OrdinalIgnoreCase))
-                    return scriptContext.Value;
-            }
-
-            return null;
-        }
-
-        public static bool StopSession(IUser user)
-        {
-            return ScriptContexts.Keys
-                .ToList()
-                .Where(c => c.Equals(user.Id, StringComparison.OrdinalIgnoreCase))
-                .All(c => ScriptContexts.Remove(c));
-        }
         public bool SupportsUser(Type commandUser)
         {
             return true;
@@ -63,7 +26,7 @@ namespace Rocket.Scripting.Commands
             if (commandContext.Parameters.Length == 0)
                 throw new CommandWrongUsageException();
 
-            var scriptContext = GetScriptContext(commandContext.User);
+            var scriptContext = _scriptPlugin.GetScriptContext(commandContext.User);
             if (scriptContext == null)
             {
                 commandContext.User.SendMessage("Session was not started yet. Use " + commandContext.CommandPrefix + commandContext.CommandAlias + " start <type> to start a new session.", ConsoleColor.Red);
@@ -81,11 +44,18 @@ namespace Rocket.Scripting.Commands
         public string Description => null;
         public string Permission => "Rocket.Scripting";
         public string Syntax => "<expression>";
-        public IChildCommand[] ChildCommands => new IChildCommand[] { new CommandEvalStart(), new CommandEvalExit() };
+        public IChildCommand[] ChildCommands => new IChildCommand[] { new CommandEvalStart(_scriptPlugin), new CommandEvalExit(_scriptPlugin) };
     }
 
     public class CommandEvalStart : IChildCommand
     {
+        private readonly ScriptingPlugin _scriptPlugin;
+
+        public CommandEvalStart(IPlugin plugin)
+        {
+            _scriptPlugin = (ScriptingPlugin)plugin;
+        }
+
         public bool SupportsUser(Type commandUser)
         {
             return true;
@@ -97,7 +67,7 @@ namespace Rocket.Scripting.Commands
                 throw new CommandWrongUsageException();
 
             var scriptType = commandContext.Parameters[0];
-            var scriptingContext = CommandEval.StartSession(commandContext.Container, commandContext.User, scriptType);
+            var scriptingContext = _scriptPlugin.StartSession(commandContext.Container, commandContext.User, scriptType);
             if (scriptingContext == null)
             {
                 commandContext.User.SendMessage("Script provider not found: " + scriptType, ConsoleColor.Red);
@@ -121,6 +91,13 @@ namespace Rocket.Scripting.Commands
 
     public class CommandEvalExit : IChildCommand
     {
+        private readonly ScriptingPlugin _scriptPlugin;
+
+        public CommandEvalExit(IPlugin plugin)
+        {
+            _scriptPlugin = (ScriptingPlugin)plugin;
+        }
+
         public bool SupportsUser(Type commandUser)
         {
             return true;
@@ -131,7 +108,7 @@ namespace Rocket.Scripting.Commands
             if (commandContext.Parameters.Length != 0)
                 throw new CommandWrongUsageException();
 
-            bool success = CommandEval.StopSession(commandContext.User);
+            bool success = _scriptPlugin.StopSession(commandContext.User);
             if (!success)
             {
                 commandContext.User.SendMessage("Session is not running.", ConsoleColor.Red);

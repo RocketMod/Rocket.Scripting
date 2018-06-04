@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using Jurassic;
+using System.Text.RegularExpressions;
+using Jint;
+using Jint.Native;
+using Jint.Runtime;
 using Rocket.API.DependencyInjection;
 using Rocket.API.Plugins;
 
@@ -13,7 +16,7 @@ namespace Rocket.Scripting.JavaScript
         {
         }
 
-        public override string[] FileTypes => new []{ "js" };
+        public override string[] FileTypes => new[] { "js" };
         public override string ScriptName => "JavaScript";
         public override IEnumerable<IPlugin> Plugins { get; } = new List<IPlugin>();
         protected override void OnInit()
@@ -30,11 +33,19 @@ namespace Rocket.Scripting.JavaScript
                     throw new FileNotFoundException(null, entryFile);
 
                 IScriptContext context = null;
-                ExecuteFile(entryFile, meta.EntryPoint, Container, ref context, meta, true);
+                ExecuteFile(entryFile, Container, ref context, meta, true);
             }
         }
 
-        public override ScriptResult ExecuteFile(string path, string entryPoint, IDependencyContainer container, ref IScriptContext context, ScriptPluginMeta meta, bool createPluginInstanceOnNull = false)
+        public override ScriptResult ExecuteFile(
+            string path,
+            IDependencyContainer container,
+            ref IScriptContext context,
+            ScriptPluginMeta meta,
+            bool createPluginInstanceOnNull = false,
+            string entryPoint = null,
+            params object[] arguments
+        )
         {
             if (context == null)
             {
@@ -49,7 +60,8 @@ namespace Rocket.Scripting.JavaScript
                         AddPlugin(plugin);
                     }
 
-                    context.SetGlobalVariable("plugin", plugin);
+                    plugin.Load(false);
+                    return new ScriptResult(ScriptExecutionResult.Success);
                 }
             }
 
@@ -59,14 +71,44 @@ namespace Rocket.Scripting.JavaScript
                 return new ScriptResult(ScriptExecutionResult.FailedMisc);
             }
 
-            engine.ExecuteFile(path);
-            var ret = engine.CallGlobalFunction(entryPoint, context);
-            var res = new ScriptResult(ScriptExecutionResult.Success)
+            ExecuteFromWhileWithImports(engine, path);
+
+            if (entryPoint != null)
             {
-                HasReturn = ret is Undefined,
-                Return = ret is Null ? null : ret
+                engine.Invoke(entryPoint, arguments);
+            }
+
+            var ret = engine.GetCompletionValue();
+
+            return new ScriptResult(ScriptExecutionResult.Success)
+            {
+                HasReturn = ret.Type != Types.None,
+                Return = ret == JsValue.Null ? null : ret
             };
-            return res;
+        }
+
+        private void ExecuteFromWhileWithImports(Engine engine, string filePath)
+        {
+            var currentDir = Path.GetDirectoryName(filePath);
+
+            string sourceCode = File.ReadAllText(filePath);
+
+            Regex regex = new Regex("import \"(.*)\\.js\"");
+            var matches = regex.Matches(sourceCode);
+
+            foreach (Match match in matches)
+            {
+                string expr = match.Value;
+                sourceCode = sourceCode.Replace(expr, "");
+                sourceCode = sourceCode.Replace(expr + Environment.NewLine, "");
+                sourceCode = sourceCode.Replace(expr + ";", "");
+                sourceCode = sourceCode.Replace(expr + ";" + Environment.NewLine, "");
+
+                var fileName = match.Groups[0].Value;
+                ExecuteFromWhileWithImports(engine, Path.Combine(currentDir, fileName + ".js"));
+            }
+
+            engine.Execute(sourceCode);
         }
 
         protected void AddPlugin(ScriptPlugin plugin)
@@ -83,8 +125,7 @@ namespace Rocket.Scripting.JavaScript
 
         public override IScriptContext CreateScriptContext(IDependencyContainer container)
         {
-            var engine = new ScriptEngine();
-            engine.EnableExposedClrTypes = true;
+            var engine = new Engine((options) => options.AllowClr(AppDomain.CurrentDomain.GetAssemblies()));
 
             var ctx = new JavaScriptContext(container, engine);
             RegisterContext(ctx);
