@@ -86,6 +86,9 @@ namespace Rocket.Scripting.CSharp
 
         public override void LoadPlugins()
         {
+            if (!Directory.Exists(WorkingDirectory))
+                Directory.CreateDirectory(WorkingDirectory);
+
             foreach (var directory in Directory.GetDirectories(WorkingDirectory))
             {
                 var pluginFile = Path.Combine(directory, "plugin.json");

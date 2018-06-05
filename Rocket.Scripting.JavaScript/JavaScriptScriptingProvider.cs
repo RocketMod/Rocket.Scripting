@@ -24,6 +24,9 @@ namespace Rocket.Scripting.JavaScript
         public override IEnumerable<IPlugin> Plugins { get; } = new List<IPlugin>();
         public override void LoadPlugins()
         {
+            if (!Directory.Exists(WorkingDirectory))
+                Directory.CreateDirectory(WorkingDirectory);
+
             foreach (var directory in Directory.GetDirectories(WorkingDirectory))
             {
                 var pluginFile = Path.Combine(directory, "plugin.json");
@@ -119,7 +122,7 @@ namespace Rocket.Scripting.JavaScript
 
             string sourceCode = File.ReadAllText(filePath);
 
-            Regex regex = new Regex("import \"(.*)\\.js\"");
+            Regex regex = new Regex("import\\s?\\(?[\'\"](?:(.*).js)[\'\"]\\)?");
             var matches = regex.Matches(sourceCode);
 
             foreach (Match match in matches)
