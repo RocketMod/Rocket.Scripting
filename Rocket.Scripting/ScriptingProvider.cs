@@ -71,10 +71,8 @@ namespace Rocket.Scripting
             if (!Directory.Exists(WorkingDirectory))
                 Directory.CreateDirectory(WorkingDirectory);
 
-            OnInit();
+            LoadPlugins();
         }
-
-        protected abstract void OnInit();
 
         /// <inheritdoc />
         public void ExecuteSoftDependCode(string pluginName, Action<IPlugin> action)
@@ -142,7 +140,6 @@ namespace Rocket.Scripting
         /// <param name="context">The script context.</param>
         public virtual void RegisterContext(IScriptContext context)
         {
-            context.SetGlobalVariables();
             Contexts.Add(context);
         }
 
@@ -192,13 +189,17 @@ namespace Rocket.Scripting
 
         public abstract IScriptContext CreateScriptContext(IDependencyContainer container);
 
+        public abstract void LoadPlugins();
+
+        public abstract void UnloadPlugins();
+
         /// <inheritdoc />
         public string WorkingDirectory
         {
             get
             {
                 var baseDir = Container.Resolve<IRuntime>().WorkingDirectory;
-                return Path.Combine(Path.Combine(baseDir, "Scripting"), ScriptName);
+                return Path.Combine(Path.Combine(baseDir, "Scripts"), ScriptName);
             }
         }
 

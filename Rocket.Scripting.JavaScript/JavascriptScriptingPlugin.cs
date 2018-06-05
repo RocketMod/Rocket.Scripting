@@ -1,22 +1,23 @@
 ﻿using Rocket.API.DependencyInjection;
-using Rocket.API.Plugins;
 using Rocket.Core.Plugins;
 
 namespace Rocket.Scripting.JavaScript
 {
     public class JavaScriptScriptingPlugin : Plugin
     {
-        public JavaScriptScriptingPlugin(IDependencyContainer container) : base("JavaScriptPlugin", container)
+        public JavaScriptScriptingPlugin(IDependencyContainer container) : base("JavaScript_ScriptProvider", container)
         {
         }
 
         protected override void OnLoad(bool isFromReload)
         {
             base.OnLoad(isFromReload);
-            if (!isFromReload)
-            {
-                Container.Resolve<IPluginManager>("javascript_plugins").Init();
-            }
+            Container.Resolve<IScriptingProvider>("javascript").LoadPlugins();
+        }
+
+        protected override void OnUnload()
+        {
+            Container.Resolve<IScriptingProvider>("javascript").UnloadPlugins();
         }
     }
 }

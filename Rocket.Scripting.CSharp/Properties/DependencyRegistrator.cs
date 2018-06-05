@@ -9,7 +9,7 @@ namespace Rocket.Scripting.CSharp.Properties
         {
             container.RegisterSingletonType<IPluginManager, CSharpScriptingProvider>("csharp_plugins");
             var instance = (CSharpScriptingProvider) container.Resolve<IPluginManager>("csharp_plugins");
-            container.RegisterSingletonInstance<IScriptingProvider>(instance, "csharp_plugins");
+            container.RegisterSingletonInstance<IScriptingProvider>(instance, "csharp");
         }
     }
 }

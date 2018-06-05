@@ -1,13 +1,6 @@
-﻿using System.Collections.Generic;
-using System.IO;
-using Rocket.API.Commands;
-using Rocket.API.Configuration;
+﻿using System.IO;
 using Rocket.API.DependencyInjection;
-using Rocket.API.Eventing;
 using Rocket.API.Plugins;
-using Rocket.API.User;
-using Rocket.Core.Commands.Events;
-using Rocket.Core.Configuration;
 using Rocket.Core.DependencyInjection;
 
 namespace Rocket.Scripting

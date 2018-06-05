@@ -1,12 +1,11 @@
-﻿using System.Collections.Generic;
-using Rocket.API.DependencyInjection;
+﻿using Rocket.API.DependencyInjection;
 
 namespace Rocket.Scripting
 {
     public interface IScriptingProvider
     {
         string[] FileTypes { get; }
-
+        
         string ScriptName { get; }
 
         void RegisterContext(IScriptContext context);
@@ -31,5 +30,8 @@ namespace Rocket.Scripting
             params object[] arguments);
 
         IScriptContext CreateScriptContext(IDependencyContainer container);
+        void LoadPlugins();
+
+        void UnloadPlugins();
     }
 }

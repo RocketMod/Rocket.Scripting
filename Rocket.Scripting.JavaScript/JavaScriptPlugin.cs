@@ -15,7 +15,7 @@ namespace Rocket.Scripting.JavaScript
         protected override bool OnLoad(bool isFromReload)
         {
             var engine = ((JavaScriptContext) ScriptContext).ScriptEngine;
-            engine.Invoke(PluginMeta.EntryPoint, this, Container, isFromReload);
+            engine.Invoke("Load", isFromReload);
             var result = engine.GetCompletionValue();
             return result.Type == Types.None || result == JsBoolean.True || result == JsValue.Undefined || result == JsValue.Null;
         }
@@ -23,7 +23,9 @@ namespace Rocket.Scripting.JavaScript
         protected override bool OnUnload()
         {
             var engine = ((JavaScriptContext)ScriptContext).ScriptEngine;
-            return true;
+            engine.Invoke("Unload");
+            var result = engine.GetCompletionValue();
+            return result.Type == Types.None || result == JsBoolean.True || result == JsValue.Undefined || result == JsValue.Null;
         }
     }
 }

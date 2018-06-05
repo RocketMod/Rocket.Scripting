@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using Jint;
 using Jint.Native;
 using Jint.Runtime;
 using Rocket.API.DependencyInjection;
+using Rocket.API.Logging;
 using Rocket.API.Plugins;
+using Rocket.Core.Logging;
 
 namespace Rocket.Scripting.JavaScript
 {
@@ -19,7 +22,7 @@ namespace Rocket.Scripting.JavaScript
         public override string[] FileTypes => new[] { "js" };
         public override string ScriptName => "JavaScript";
         public override IEnumerable<IPlugin> Plugins { get; } = new List<IPlugin>();
-        protected override void OnInit()
+        public override void LoadPlugins()
         {
             foreach (var directory in Directory.GetDirectories(WorkingDirectory))
             {
@@ -27,14 +30,32 @@ namespace Rocket.Scripting.JavaScript
                 if (!File.Exists(pluginFile))
                     continue;
 
-                var meta = GetPluginMeta(pluginFile);
+                var meta = GetPluginMeta(directory);
                 var entryFile = Path.Combine(directory, meta.EntryFile);
                 if (!File.Exists(entryFile))
                     throw new FileNotFoundException(null, entryFile);
 
                 IScriptContext context = null;
-                ExecuteFile(entryFile, Container, ref context, meta, true);
+
+                try
+                {
+                    ExecuteFile(entryFile, Container, ref context, meta, true);
+                }
+                catch (Exception ex)
+                {
+                    Container.Resolve<ILogger>().LogFatal("Failed to load script: " + meta.Name, ex);
+                }
             }
+        }
+
+        public override void UnloadPlugins()
+        {
+            foreach (var plugin in Plugins)
+            {
+                plugin.Unload();
+            }
+
+            ((List<IPlugin>)Plugins).Clear();
         }
 
         public override ScriptResult ExecuteFile(
@@ -60,18 +81,23 @@ namespace Rocket.Scripting.JavaScript
                         AddPlugin(plugin);
                     }
 
+                    ((JavaScriptContext)context).Plugin = plugin;
+                    context.SetGlobalVariables();
+
+                    ExecuteFromFileWithImports(((JavaScriptContext)context).ScriptEngine, path);
                     plugin.Load(false);
                     return new ScriptResult(ScriptExecutionResult.Success);
                 }
             }
 
+            context.SetGlobalVariables();
             var engine = ((JavaScriptContext)context).ScriptEngine;
             if (engine == null)
             {
                 return new ScriptResult(ScriptExecutionResult.FailedMisc);
             }
 
-            ExecuteFromWhileWithImports(engine, path);
+            ExecuteFromFileWithImports(engine, path);
 
             if (entryPoint != null)
             {
@@ -87,7 +113,7 @@ namespace Rocket.Scripting.JavaScript
             };
         }
 
-        private void ExecuteFromWhileWithImports(Engine engine, string filePath)
+        private void ExecuteFromFileWithImports(Engine engine, string filePath)
         {
             var currentDir = Path.GetDirectoryName(filePath);
 
@@ -105,7 +131,7 @@ namespace Rocket.Scripting.JavaScript
                 sourceCode = sourceCode.Replace(expr + ";" + Environment.NewLine, "");
 
                 var fileName = match.Groups[0].Value;
-                ExecuteFromWhileWithImports(engine, Path.Combine(currentDir, fileName + ".js"));
+                ExecuteFromFileWithImports(engine, Path.Combine(currentDir, fileName + ".js"));
             }
 
             engine.Execute(sourceCode);
@@ -125,7 +151,22 @@ namespace Rocket.Scripting.JavaScript
 
         public override IScriptContext CreateScriptContext(IDependencyContainer container)
         {
-            var engine = new Engine((options) => options.AllowClr(AppDomain.CurrentDomain.GetAssemblies()));
+            var logger = container.Resolve<ILogger>();
+            List<Assembly> assemblies = new List<Assembly>();
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                try
+                {
+                    assembly.GetTypes();
+                    assemblies.Add(assembly);
+                    /* only add assemblies we can get the types of to fix an issue with jint */
+                }
+                catch
+                {
+                }
+            }
+
+            var engine = new Engine((options) => options.AllowClr(assemblies.ToArray()));
 
             var ctx = new JavaScriptContext(container, engine);
             RegisterContext(ctx);

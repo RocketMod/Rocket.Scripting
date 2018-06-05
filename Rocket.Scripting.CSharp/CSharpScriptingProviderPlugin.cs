@@ -6,17 +6,20 @@ namespace Rocket.Scripting.CSharp
 {
     public class CSharpScriptingProviderPlugin : Plugin
     {
-        public CSharpScriptingProviderPlugin(IDependencyContainer container) : base("C# Scripting", container)
+        public CSharpScriptingProviderPlugin(IDependencyContainer container) : base("C#_ScriptProvider", container)
         {
         }
 
         protected override void OnLoad(bool isFromReload)
         {
             base.OnLoad(isFromReload);
-            if (!isFromReload)
-            {
-                Container.Resolve<IPluginManager>("csharp_plugins").Init();
-            }
+            Container.Resolve<IScriptingProvider>("csharp").LoadPlugins();
+        }
+
+        protected override void OnUnload()
+        {
+            //likely not supported
+            Container.Resolve<IScriptingProvider>("csharp").UnloadPlugins();
         }
     }
 }

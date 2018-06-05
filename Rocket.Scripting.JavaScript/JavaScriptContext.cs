@@ -3,6 +3,7 @@ using Jint;
 using Jint.Native;
 using Jint.Runtime;
 using Rocket.API.DependencyInjection;
+using Rocket.API.Plugins;
 
 namespace Rocket.Scripting.JavaScript
 {
@@ -17,6 +18,7 @@ namespace Rocket.Scripting.JavaScript
         public Engine ScriptEngine { get; }
 
         public IDependencyContainer Container { get; }
+        public IPlugin Plugin { get; internal set; }
 
         public void ExposeType(string name, Type type)
         {

@@ -9,7 +9,7 @@ namespace Rocket.Scripting.JavaScript.Properties
         {
             container.RegisterSingletonType<IPluginManager, JavaScriptScriptingProvider>("javascript_plugins");
             var instance = (JavaScriptScriptingProvider) container.Resolve<IPluginManager>("javascript_plugins");
-            container.RegisterSingletonInstance<IScriptingProvider>(instance, "javascript_scripts");
+            container.RegisterSingletonInstance<IScriptingProvider>(instance, "javascript");
         }
     }
 }

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Drawing;
+using Rocket.API;
 using Rocket.API.Economy;
 using Rocket.API.Eventing;
 using Rocket.API.Logging;
@@ -15,6 +17,8 @@ namespace Rocket.Scripting
         public static void SetGlobalVariables(this IScriptContext context)
         {
             context.SetGlobalVariable("container", context.Container);
+            context.SetGlobalVariable("plugin", context.Plugin);
+
             TryRegisterService<ILogger>(context, "logger");
             TryRegisterService<ITaskScheduler>(context, "scheduler");
             TryRegisterService<IPlayerManager>(context, "playermanager");
@@ -23,6 +27,7 @@ namespace Rocket.Scripting
             TryRegisterService<IUserManager>(context, "usermanager");
             TryRegisterService<IEventManager>(context, "events");
             TryRegisterService<IPermissionProvider>(context, "permissions");
+
 
             foreach (var level in Enum.GetValues(typeof(LogLevel)))
                 context.SetGlobalVariable("level_" + level.ToString().ToLower(), (int)level);
@@ -36,13 +41,44 @@ namespace Rocket.Scripting
             {
                 context.Container.Resolve<ILogger>().Log(message);
             }));
-            context.SetGlobalFunction("logex", new Action<string, int>((message, logLevel) =>
+
+            var host = context.Container.Resolve<IHost>();
+            context.SetGlobalFunction("print", new Action<string>(message =>
+            {
+                ConsoleColor bak = Console.ForegroundColor;
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.Write("[");
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.Write(context.Plugin?.Name ?? "Script");
+
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.Write("] ");
+
+                Console.WriteLine(message);
+
+                Console.ForegroundColor = bak;
+            }));
+
+            context.SetGlobalFunction("print_color", new Action<string, int>((message, c) =>
+            {
+                ConsoleColor bak = Console.ForegroundColor;
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.Write("[");
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.Write(context.Plugin?.Name ?? "Script");
+
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.Write("] ");
+
+                Console.ForegroundColor = (ConsoleColor) c;
+                Console.WriteLine(message);
+
+                Console.ForegroundColor = bak;
+            }));
+
+            context.SetGlobalFunction("log_level", new Action<string, int>((message, logLevel) =>
             {
                 context.Container.Resolve<ILogger>().Log(message, (LogLevel)logLevel);
-            }));
-            context.SetGlobalFunction("log_color", new Action<string, int, int>((message, logLevel, color) =>
-            {
-                context.Container.Resolve<ILogger>().Log(message, (LogLevel)logLevel, null, (ConsoleColor?)color);
             }));
         }
 

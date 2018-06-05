@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
 using Rocket.API.Commands;
 using Rocket.API.DependencyInjection;
 using Rocket.API.Eventing;
@@ -19,21 +17,39 @@ namespace Rocket.Scripting
         {
         }
 
+        protected override void OnLoad(bool isFromReload)
+        {
+            EventManager.AddEventListener(this, this);
+        }
+
         public IScriptContext StartSession(IDependencyContainer container, IUser user, string providerName)
         {
             var context = GetScriptContext(user);
             if (context != null)
                 return context;
 
+            var provider = GetScriptingProvider(container, providerName);
+            if (provider != null)
+            {
+                context = provider.CreateScriptContext(container);
+                context.SetGlobalVariables();
+                context.SetGlobalVariable("me", user);
+                ScriptContexts.Add(user, context);
+                return context;
+            }
+
+            return null;
+        }
+
+        public IScriptingProvider GetScriptingProvider(IDependencyContainer container, string providerName)
+        {
             var providers = container.ResolveAll<IScriptingProvider>();
             foreach (var provider in providers)
             {
                 if (provider.ScriptName.Equals(providerName, StringComparison.OrdinalIgnoreCase)
                     || provider.FileTypes.Any(c => c.Equals(providerName, StringComparison.OrdinalIgnoreCase)))
                 {
-                    context = provider.CreateScriptContext(container);
-                    ScriptContexts.Add(user, context);
-                    return context;
+                    return provider;
                 }
             }
 

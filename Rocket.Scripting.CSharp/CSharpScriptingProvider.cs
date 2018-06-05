@@ -1,8 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using CSScriptLibrary;
 using Rocket.API.DependencyInjection;
+using Rocket.API.Logging;
 using Rocket.API.Plugins;
+using Rocket.Core.Logging;
 
 namespace Rocket.Scripting.CSharp
 {
@@ -50,9 +53,15 @@ namespace Rocket.Scripting.CSharp
                         _plugins.Add(plugin);
                     }
 
-                    context.SetGlobalVariable("plugin", plugin);
+                    ((CSharpScriptContext)context).Plugin = plugin;
+                    context.SetGlobalVariables();
+
+                    plugin.Load(false);
+                    return new ScriptResult(ScriptExecutionResult.Success);
                 }
             }
+
+            context.SetGlobalVariables();
 
             var engine = ((CSharpScriptContext)context).Evaluator;
             if (engine == null)
@@ -75,7 +84,7 @@ namespace Rocket.Scripting.CSharp
             return new ScriptResult(ScriptExecutionResult.Success);
         }
 
-        protected override void OnInit()
+        public override void LoadPlugins()
         {
             foreach (var directory in Directory.GetDirectories(WorkingDirectory))
             {
@@ -83,14 +92,32 @@ namespace Rocket.Scripting.CSharp
                 if (!File.Exists(pluginFile))
                     continue;
 
-                var meta = GetPluginMeta(pluginFile);
+                var meta = GetPluginMeta(directory);
                 var entryFile = Path.Combine(directory, meta.EntryFile);
                 if (!File.Exists(entryFile))
                     throw new FileNotFoundException(null, entryFile);
 
                 IScriptContext context = null;
-                ExecuteFile(entryFile, Container, ref context, meta, true);
+
+                try
+                {
+                    ExecuteFile(entryFile, Container, ref context, meta, true);
+                }
+                catch (Exception ex)
+                {
+                    Container.Resolve<ILogger>().LogFatal("Failed to load script: " + meta.Name, ex);
+                }
             }
+        }
+
+        public override void UnloadPlugins()
+        {
+            foreach (var plugin in _plugins)
+            {
+                plugin.Unload();
+            }
+
+            _plugins.Clear();
         }
 
         public override string ServiceName => "C#";

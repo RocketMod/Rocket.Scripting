@@ -1,6 +1,7 @@
 ﻿using System;
 using CSScriptLibrary;
 using Rocket.API.DependencyInjection;
+using Rocket.API.Plugins;
 
 namespace Rocket.Scripting.CSharp
 {
@@ -14,6 +15,7 @@ namespace Rocket.Scripting.CSharp
 
         public IDependencyContainer Container { get; }
         public IEvaluator Evaluator { get; }
+        public IPlugin Plugin { get; internal set; }
 
         public void ExposeType(string name, Type type)
         {

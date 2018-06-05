@@ -70,6 +70,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Commands\CommandEval.cs" />
+    <Compile Include="Commands\CommandSReload.cs" />
     <Compile Include="GlobalMembersHelper.cs" />
     <Compile Include="IScriptContext.cs" />
     <Compile Include="IScriptingProvider.cs" />
