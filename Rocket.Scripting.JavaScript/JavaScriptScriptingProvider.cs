@@ -122,7 +122,7 @@ namespace Rocket.Scripting.JavaScript
 
             string sourceCode = File.ReadAllText(filePath);
 
-            Regex regex = new Regex("import\\s?\\(?[\'\"](?:(.*).js)[\'\"]\\)?");
+            Regex regex = new Regex("import ?\\(?(?<2>[\'\"])\\b(.*).js\\b\\2\\)?");
             var matches = regex.Matches(sourceCode);
 
             foreach (Match match in matches)
