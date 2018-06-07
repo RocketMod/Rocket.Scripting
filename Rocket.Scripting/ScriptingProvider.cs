@@ -148,6 +148,8 @@ namespace Rocket.Scripting
             Contexts.Remove(context);
         }
 
+        public abstract bool SupportsRepl { get; }
+
         /// <summary>
         /// Executes the given script file
         /// </summary>

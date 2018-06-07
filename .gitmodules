@@ -1,0 +1,6 @@
+[submodule "Rocket.Scripting.Node/Espresso"]
+	path = Rocket.Scripting.Node/Espresso
+	url = https://github.com/prepare/Espresso
+[submodule "Rocket.Scripting.Node/node"]
+	path = Rocket.Scripting.Node/node
+	url = https://github.com/nodejs/node

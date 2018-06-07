@@ -17,8 +17,11 @@ namespace Rocket.Scripting.CSharp
 
         public override string[] FileTypes => new[] { "cs" };
         public override string ScriptName => "C#";
-        public override IEnumerable<IPlugin> Plugins { get; }
-        private List<IPlugin> _plugins = new List<IPlugin>();
+
+        public override bool SupportsRepl => true;
+        
+        public override IEnumerable<IPlugin> Plugins => _plugins;
+        private readonly List<IPlugin> _plugins = new List<IPlugin>();
 
         public override IScriptContext CreateScriptContext(IDependencyContainer container)
         {

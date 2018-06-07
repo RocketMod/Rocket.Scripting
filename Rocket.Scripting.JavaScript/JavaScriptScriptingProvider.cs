@@ -61,6 +61,8 @@ namespace Rocket.Scripting.JavaScript
             ((List<IPlugin>)Plugins).Clear();
         }
 
+        public override bool SupportsRepl => true;
+
         public override ScriptResult ExecuteFile(
             string path,
             IDependencyContainer container,

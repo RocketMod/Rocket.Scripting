@@ -12,6 +12,8 @@ namespace Rocket.Scripting
 
         void UnregisterContext(IScriptContext context);
 
+        bool SupportsRepl { get; }
+
         ScriptResult ExecuteFile(
             string path, 
             IDependencyContainer container,

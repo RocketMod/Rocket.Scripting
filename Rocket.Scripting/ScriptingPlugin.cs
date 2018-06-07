@@ -6,12 +6,14 @@ using Rocket.API.DependencyInjection;
 using Rocket.API.Eventing;
 using Rocket.API.User;
 using Rocket.Core.Commands.Events;
+using Rocket.Core.Player.Events;
 using Rocket.Core.Plugins;
 using Rocket.Core.User;
+using Rocket.Core.User.Events;
 
 namespace Rocket.Scripting
 {
-    class ScriptingPlugin : Plugin, IEventListener<PreCommandExecutionEvent>
+    class ScriptingPlugin : Plugin, IEventListener<PreCommandExecutionEvent>, IEventListener<UserChatEvent>
     {
         public ScriptingPlugin(IDependencyContainer container) : base("ScriptingPlugin", container)
         {
@@ -93,6 +95,21 @@ namespace Rocket.Scripting
 
             if (result.HasReturn)
                 console.SendMessage("> " + result.Return, ConsoleColor.Gray);
+        }
+
+        public void HandleEvent(IEventEmitter emitter, UserChatEvent @event)
+        {
+            var session = GetScriptContext(@event.User);
+            if (session == null)
+                return;
+
+            @event.IsCancelled = true;
+
+            var cmd = @event.Message;
+            var result = session.Eval(cmd);
+
+            if (result.HasReturn)
+                @event.User.SendMessage("> " + result.Return, ConsoleColor.Gray);
         }
     }
 }
