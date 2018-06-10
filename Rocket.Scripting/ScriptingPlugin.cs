@@ -91,6 +91,12 @@ namespace Rocket.Scripting
             @event.IsCancelled = true;
 
             var cmd = @event.CommandLine;
+            if (cmd == "exit")
+            {
+                StopSession(@event.User);
+                return;
+            }
+
             var result = session.Eval(cmd);
 
             if (result.HasReturn)
@@ -104,6 +110,12 @@ namespace Rocket.Scripting
                 return;
 
             @event.IsCancelled = true;
+
+            if (@event.Message == "exit")
+            {
+                StopSession(@event.User);
+                return;
+            }
 
             var cmd = @event.Message;
             var result = session.Eval(cmd);
